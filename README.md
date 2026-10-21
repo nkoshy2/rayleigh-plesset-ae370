@@ -64,9 +64,9 @@ latexmk -pdf main.tex
 
 | Name | NetID |
 |---|---|
-| TODO Member 1 | TODO |
-| TODO Member 2 | TODO |
-| TODO Member 3 | TODO |
+| Naveen Koshy | nkoshy2 |
+| Ava Hoppe | arhoppe2 |
+| Alison Nazaruk | nazaruk3 |
 | TODO Member 4 | TODO |
 
 Roles and contribution estimates: [`docs/contributions.md`](docs/contributions.md).

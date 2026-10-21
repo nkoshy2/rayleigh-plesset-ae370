@@ -1,0 +1,10 @@
+# Runtime
+numpy>=1.26
+matplotlib>=3.8
+# scipy is allowed only for things that are NOT time integration
+# (e.g. scipy.integrate.quad for the Case A reference solution).
+# Never use scipy.integrate.solve_ivp / odeint to advance the solution.
+scipy>=1.11
+
+# Testing
+pytest>=8.0

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Experiment outputs that can be regenerated (keep final figures in figures/)
+experiments/output/
+*.npz
+
+# LaTeX build products
+report/*.aux
+report/*.bbl
+report/*.blg
+report/*.log
+report/*.out
+report/*.toc
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
+report/sections/*.aux
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

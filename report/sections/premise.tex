@@ -1,0 +1,271 @@
+\section{Premise}\label{sec:premise}
+
+\subsection{Motivation: bubbles in rocket turbopumps}
+
+A liquid rocket engine needs its propellants delivered at high pressure, and the turbopump
+that does this is one of the hardest parts of the engine to design. To keep the propellant
+tanks light, the tank pressure is kept low, which means the liquid arrives at the pump with
+only a small margin above its vapor pressure. The first stage of the pump, the
+\emph{inducer}, is an axial impeller built to run with some vapor present. Near its blade
+leading edges and tip clearance the local pressure drops below the vapor pressure, and small
+gas and vapor nuclei in the liquid grow into cavitation bubbles
+\cite{brennen1994pumps,franc2004}.
+
+Those bubbles are then carried downstream into higher pressure, and they collapse. A
+collapsing bubble focuses the energy of the surrounding liquid into a tiny volume over a
+very short time, producing high wall speeds and large local pressures. Repeated near a
+surface, this pits and erodes blades. At the pump level, enough cavitation degrades the head
+the pump delivers and can drive unsteady behavior such as rotating cavitation and cavitation
+surge \cite{brennen1994pumps}. The same physics shows up in propellant feed lines, valves and
+injectors.
+
+Real inducer cavitation involves clouds and sheets of bubbles, walls and non-spherical
+collapse. We study the simplest building block: a single spherical bubble in a large body of
+liquid whose far-field pressure changes in time. The Rayleigh--Plesset equation describes
+this bubble \cite{rayleigh1917,plesset1949,brennen1995}. It is simple enough to study
+carefully and still captures the violent, strongly nonlinear collapse that makes cavitation
+damaging. We use water at 20\,$^\circ$C as the working liquid because its properties are
+well known and the literature for checking our results is largest. Cryogenic propellants
+behave differently, partly because evaporation and condensation cool and heat the bubble
+(the ``thermal effect'' that suppresses cavitation in cryogens \cite{brennen1995}), and our
+model leaves that out.
+
+\subsection{Research questions}\label{sec:questions}
+
+\begin{enumerate}
+  \item[\textbf{Q1.}] \textbf{How hard does a bubble collapse after a pressure jump?}
+  A nucleus that has settled to equilibrium in the low-pressure region near a blade is
+  suddenly exposed to a higher recovery pressure. How do the minimum radius
+  $R_{\min}/R_0$, the peak inward wall speed $|\dot R|_{\max}$ and the peak gas pressure
+  $p_{g,\max}$ scale with the pressure ratio $\Pi = p_1/p_0$ and the initial radius $R_0$?
+  At what pressure ratio does the gas inside stop mattering, so that the collapse looks like
+  the empty-cavity Rayleigh limit until the very end?
+
+  \item[\textbf{Q2.}] \textbf{How does a bubble respond to oscillating pressure, and where does it
+  stop behaving linearly?} With the ambient pressure oscillating at frequency $\omega$ and
+  relative amplitude $\varepsilon$, where is the resonance peak, and how far does it shift
+  from the small-amplitude natural frequency $\omega_0$ as $\varepsilon$ grows? At what
+  amplitude does the response turn from gentle oscillation into large growth followed by
+  violent collapse?
+
+  \item[\textbf{Q3.}] \textbf{Which physics controls the collapse, and when?} Gas compression,
+  viscosity and surface tension all resist collapse. Over the range of $R_0$ and $\Pi$ we
+  sweep, which one sets $R_{\min}$ and the peak pressure? We answer this by switching terms
+  off one at a time and comparing against the dimensionless groups of
+  Section~\ref{sec:nondim}, producing a regime map.
+\end{enumerate}
+
+Q1 and Q2 are the core of the project; Q3 is a stretch goal that reuses the same runs.
+None of these questions can be answered from a closed-form solution, as explained in
+Section~\ref{sec:whynumerics}.
+
+\subsection{The initial value problem}\label{sec:ivp}
+
+The bubble radius $R(t)$ obeys the Rayleigh--Plesset equation
+\cite{plesset1949,brennen1995,plesset1977}
+\begin{equation}\label{eq:rp}
+  R\ddot R + \frac{3}{2}\dot R^2
+  = \frac{1}{\rho}\left[ p_v + \pgz\left(\frac{R_0}{R}\right)^{3\kappa}
+    - \pinf(t) - \frac{2\sigma}{R} - \frac{4\mu\dot R}{R} \right],
+  \qquad R(0) = R_0,\quad \dot R(0) = 0,
+\end{equation}
+where dots are time derivatives. The bracket is the pressure in the liquid just outside the
+bubble wall minus the far-field pressure. The initial gas pressure is set so the bubble
+starts in equilibrium with the ambient pressure at $t = 0$,
+\begin{equation}\label{eq:pg0}
+  \pgz = \pinf(0) - p_v + \frac{2\sigma}{R_0},
+\end{equation}
+except in Case A, where the bubble is empty ($\pgz = 0$). With the state
+$\mathbf{y} = [R,\ \dot R]^{\mathsf T}$, Eq.~\eqref{eq:rp} becomes the first-order system
+\begin{equation}\label{eq:system}
+  \frac{d}{dt}\begin{bmatrix} R \\ \dot R \end{bmatrix}
+  = \begin{bmatrix}
+      \dot R \\[2pt]
+      \dfrac{1}{R}\left\{ \dfrac{1}{\rho}\left[ p_v + \pgz\left(\dfrac{R_0}{R}\right)^{3\kappa}
+      - \pinf(t) - \dfrac{2\sigma}{R} - \dfrac{4\mu\dot R}{R} \right] - \dfrac{3}{2}\dot R^2 \right\}
+    \end{bmatrix},
+\end{equation}
+which is what our integrators advance.
+
+\paragraph{Symbols.} $R$ is the bubble radius and $R_0$ its initial value; $\rho$, $\mu$ and
+$\sigma$ are the liquid density, dynamic viscosity and surface tension; $p_v$ is the vapor
+pressure, taken constant; $\pgz$ is the partial pressure of non-condensable gas when
+$R = R_0$; $\kappa$ is the polytropic exponent of that gas ($\kappa = 1$ isothermal,
+$\kappa = 1.4$ adiabatic air); and $\pinf(t)$ is the prescribed far-field liquid pressure.
+Table~\ref{tab:params} lists values.
+
+\paragraph{Units check.} Multiplying Eq.~\eqref{eq:rp} by $\rho$, every term should be a
+pressure. On the left, $\rho R\ddot R$ and $\rho\dot R^2$ have units
+$(\mathrm{kg/m^3})(\mathrm{m^2/s^2}) = \mathrm{Pa}$. On the right, $p_v$, $\pgz$ and
+$\pinf$ are pressures (the factor $(R_0/R)^{3\kappa}$ is dimensionless),
+$2\sigma/R$ is $(\mathrm{N/m})/\mathrm{m} = \mathrm{Pa}$, and $4\mu\dot R/R$ is
+$(\mathrm{Pa\,s})(\mathrm{m/s})/\mathrm{m} = \mathrm{Pa}$. All terms are consistent.
+
+\paragraph{Assumptions.} The bubble stays spherical; the liquid is incompressible and
+infinite in extent; the gas compresses polytropically with fixed $\kappa$, with no gas
+diffusion across the wall; the vapor stays at $p_v$ (evaporation and condensation are
+instantaneous); and the gas pressure is uniform inside the bubble. Incompressibility is the
+assumption most likely to fail: it requires the wall Mach number $|\dot R|/c$ to stay small,
+with $c \approx 1482\ \mathrm{m/s}$ in water. We will report $|\dot R|_{\max}/c$ for every run
+and treat cases where it approaches about $0.1$ as outside the model's range
+\todo{confirm this threshold against \cite{brennen1995} or \cite{lauterborn2010}}.
+
+\begin{table}[t]
+\centering
+\caption{Parameters. Liquid properties are for water at 20\,$^\circ$C
+\cite{nistwebbook}. ``Fixed'' parameters are held at the baseline except when a term is
+switched off for Q3.}
+\label{tab:params}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Symbol & Meaning & Units & Baseline & Range swept \\
+\midrule
+$\rho$ & liquid density & $\mathrm{kg/m^3}$ & $998.2$ & fixed \\
+$\mu$ & dynamic viscosity & $\mathrm{Pa\,s}$ & $1.002\times10^{-3}$ & fixed, or $0$ \\
+$\sigma$ & surface tension & $\mathrm{N/m}$ & $0.0728$ & fixed, or $0$ \\
+$p_v$ & vapor pressure & $\mathrm{Pa}$ & $2.34\times10^{3}$ & fixed \\
+$p_0$ & ambient pressure before the event & $\mathrm{Pa}$ & $1.01325\times10^{5}$ & fixed \\
+$\kappa$ & polytropic exponent & -- & $1.4$ & $1.0$ and $1.4$ \\
+$R_0$ & initial radius & $\mathrm{m}$ & $100\ \mu\mathrm{m}$ (B), $10\ \mu\mathrm{m}$ (C) & $1\ \mu\mathrm{m}$ to $1\ \mathrm{mm}$ \\
+$\Pi = p_1/p_0$ & pressure ratio, Case B & -- & $5$ & $1.5$ to $20$ \\
+$\varepsilon$ & forcing amplitude, Case C & -- & $0.01$ & $0.01$ to $0.8$ \\
+$\omega/\omega_0$ & forcing frequency, Case C & -- & -- & $0.2$ to $3$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Test cases}\label{sec:cases}
+
+A bubble that starts in equilibrium under constant ambient pressure never moves, so each
+case below is built to produce real dynamics: an empty cavity, a pressure step, or
+oscillating forcing.
+
+\paragraph{Case A: empty-cavity (Rayleigh) collapse.} Set $\pgz = 0$, $p_v = 0$,
+$\sigma = \mu = 0$ and $\pinf = \Delta p$ constant. The bubble starts at rest with nothing
+inside it, so it collapses. Multiplying Eq.~\eqref{eq:rp} by $2R^2\dot R$ and integrating
+once gives
+\begin{equation}\label{eq:rayleigh-energy}
+  \dot R^2 = \frac{2\Delta p}{3\rho}\left(\frac{R_0^3}{R^3} - 1\right),
+\end{equation}
+and integrating again gives the exact time to reach any radius $R$,
+\begin{equation}\label{eq:rayleigh-t}
+  t(R) = R_0\sqrt{\frac{3\rho}{2\Delta p}}\int_{R/R_0}^{1}\frac{x^{3/2}}{\sqrt{1 - x^3}}\,dx .
+\end{equation}
+Setting $R = 0$ and substituting $u = x^3$ turns the integral into a Beta function, so the
+collapse time is
+\begin{equation}\label{eq:tc}
+  t_c = \frac{1}{3}\sqrt{\frac{3}{2}}\,B\!\left(\tfrac{5}{6},\tfrac{1}{2}\right) R_0\sqrt{\frac{\rho}{\Delta p}}
+      \approx 0.91468\,R_0\sqrt{\frac{\rho}{\Delta p}},
+\end{equation}
+which matches the constant $0.915$ given by Rayleigh \cite{rayleigh1917} and Brennen
+\cite{brennen1995}. For $R_0 = 1\ \mathrm{mm}$ and $\Delta p = 101.325\ \mathrm{kPa}$,
+$R_0\sqrt{\rho/\Delta p} = 99.3\ \mu\mathrm{s}$ and $t_c \approx 90.8\ \mu\mathrm{s}$.
+Equation~\eqref{eq:rayleigh-t} gives a reference value of $R$ at any time, not just $t_c$, so
+it checks the whole trajectory. This case is our main correctness check. It is also a hard
+test for a time integrator, because the solution is singular at $t_c$
+($\dot R \to -\infty$ as $R \to 0$), so we compare up to a small final radius rather than all
+the way to $t_c$.
+
+\paragraph{Case B: gas bubble after a pressure step.} The bubble sits in equilibrium at
+$\pinf = p_0$, so $\pgz$ follows from Eq.~\eqref{eq:pg0} with $p_0$. At $t = 0$ the
+far-field pressure jumps to $p_1 = \Pi p_0$ and stays there:
+\begin{equation}
+  \pinf(t) = p_1 \quad \text{for } t > 0 .
+\end{equation}
+This mimics a nucleus convected out of the low-pressure zone near a blade into the recovery
+region. At $t = 0^+$ the wall acceleration is $\ddot R = (p_0 - p_1)/(\rho R_0) < 0$, so the
+bubble starts collapsing at once. The gas inside stiffens rapidly as $R$ drops, stops the
+collapse at a finite $R_{\min}$, and the bubble rebounds and oscillates. The right-hand side
+is smooth for $t > 0$, which makes this a good case for convergence studies. With
+$\mu = 0$, there is an exact conservation law to check against: the energy
+\begin{equation}\label{eq:energy}
+  E = 2\pi\rho R^3\dot R^2 + \frac{4\pi}{3}(p_1 - p_v)R^3 + 4\pi\sigma R^2
+      + \frac{4\pi}{3}\,\frac{\pgz R_0^{3\kappa} R^{3(1-\kappa)}}{\kappa - 1}
+\end{equation}
+(liquid kinetic energy, work against the far field, surface energy and gas internal energy)
+is constant in time for $\kappa \ne 1$. Differentiating $E$ and using Eq.~\eqref{eq:rp}
+confirms $dE/dt = 0$. Case B is also the workhorse for Q1 and Q3.
+
+\paragraph{Case C: oscillating ambient pressure.} The bubble starts in equilibrium at $p_0$,
+and the far-field pressure oscillates:
+\begin{equation}
+  \pinf(t) = p_0\left[1 - \varepsilon\sin(\omega t)\right].
+\end{equation}
+Linearizing Eq.~\eqref{eq:rp} about $R_0$ with $R = R_0(1 + x)$, $|x| \ll 1$, gives a
+damped, driven oscillator
+\begin{equation}\label{eq:linear}
+  \ddot x + 2\beta\dot x + \omega_0^2 x = \frac{\varepsilon p_0}{\rho R_0^2}\sin(\omega t),
+  \qquad
+  \omega_0^2 = \frac{1}{\rho R_0^2}\left(3\kappa\pgz - \frac{2\sigma}{R_0}\right),
+  \qquad
+  \beta = \frac{2\mu}{\rho R_0^2}.
+\end{equation}
+With $\sigma = p_v = 0$ this reduces to the Minnaert frequency
+$\omega_0 = (1/R_0)\sqrt{3\kappa p_0/\rho}$ \cite{minnaert1933}, about
+$f_0 R_0 \approx 3.29\ \mathrm{m/s}$ for air in water at one atmosphere. For our baseline
+$R_0 = 10\ \mu\mathrm{m}$ with all terms kept, $f_0 = \omega_0/2\pi \approx 342\ \mathrm{kHz}$
+for $\kappa = 1.4$ ($288\ \mathrm{kHz}$ for $\kappa = 1$), and the quality factor is
+$\omega_0/(2\beta) \approx 54$. The steady linear amplitude,
+$|x| = (\varepsilon p_0/\rho R_0^2)\big/\sqrt{(\omega_0^2 - \omega^2)^2 + 4\beta^2\omega^2}$,
+is an exact reference at small $\varepsilon$. Increasing $\varepsilon$ takes us into the
+nonlinear regime where the peak shifts and the response can become violent, which is Q2.
+
+\subsection{Dimensionless form}\label{sec:nondim}
+
+Scale the radius by $R_0$ and time by the Rayleigh time $t_R$,
+\begin{equation}
+  \tilde R = \frac{R}{R_0}, \qquad \tilde t = \frac{t}{t_R}, \qquad
+  t_R = R_0\sqrt{\frac{\rho}{\Delta p}},
+\end{equation}
+where $\Delta p$ is the pressure difference driving the motion: $\Delta p = p_1 - p_v$ for
+Case B ($\Delta p = \pinf$ for Case A, where $p_v = 0$), and $\Delta p = p_0 - p_v$ for
+Case C. With primes for $d/d\tilde t$, Eq.~\eqref{eq:rp} becomes
+\begin{equation}\label{eq:rp-nondim}
+  \tilde R\tilde R'' + \frac{3}{2}\tilde R'^2
+  = P_g\,\tilde R^{-3\kappa} - P(\tilde t) - \frac{S}{\tilde R}
+    - \frac{4}{\mathrm{Re}}\,\frac{\tilde R'}{\tilde R},
+  \qquad \tilde R(0) = 1,\quad \tilde R'(0) = 0,
+\end{equation}
+with the dimensionless groups
+\begin{equation}
+  P_g = \frac{\pgz}{\Delta p}, \qquad
+  P(\tilde t) = \frac{\pinf(t) - p_v}{\Delta p}, \qquad
+  S = \frac{2\sigma}{R_0\,\Delta p}, \qquad
+  \mathrm{Re} = \frac{R_0\sqrt{\rho\,\Delta p}}{\mu},
+\end{equation}
+plus $\kappa$, and for Case C the forcing amplitude $\varepsilon$ and frequency
+$\omega t_R$ (or equivalently $\omega/\omega_0$, since $(\omega_0 t_R)^2 = 3\kappa P_g - S$).
+In Case A, $P_g = S = 1/\mathrm{Re} = 0$ and $P = 1$, so the dimensionless collapse time is
+the pure number $0.91468$. In Case B, $P = 1$ and
+$P_g = (p_0 - p_v)/(p_1 - p_v) + S \approx 1/\Pi$, so the pressure ratio, $\kappa$, $S$ and
+$\mathrm{Re}$ fully determine $\tilde R(\tilde t)$.
+
+For water at one atmosphere, $S = 1$ at $R_0 \approx 1.5\ \mu\mathrm{m}$ and
+$\mathrm{Re} = 1$ at $R_0 \approx 0.1\ \mu\mathrm{m}$. For $R_0 \gtrsim 10\ \mu\mathrm{m}$ both
+corrections are small at the scale of the initial bubble ($S \approx 0.15$,
+$\mathrm{Re} \approx 100$ at $10\ \mu\mathrm{m}$), so Case B results for different bubble sizes
+should fall onto one curve when plotted against $\Pi$ in these variables, and departures
+from that curve at small $R_0$ show where surface tension and viscosity take over. One
+caution for Q3: these groups use the initial radius and the bulk pressure. Near $R_{\min}$
+the local length scale is much smaller and the local speed much larger, so viscosity and
+surface tension can matter more at the instant of collapse than $S$ and $\mathrm{Re}$ suggest.
+
+\subsection{Why we need numerical methods}\label{sec:whynumerics}
+
+Equation~\eqref{eq:rp} is a nonlinear second-order ODE with no closed-form solution once gas
+pressure, surface tension or viscosity are included, or once the ambient pressure varies in
+time. The only exact solution is the Case A limit, and even there $R(t)$ is known only
+implicitly through Eq.~\eqref{eq:rayleigh-t}. The linearization in Eq.~\eqref{eq:linear}
+holds only for tiny oscillations, which is exactly the regime our questions are not about:
+Q1 asks for $R_{\min}$ and peak pressures in collapses where $R$ changes by a large factor,
+and Q2 asks where the linear prediction stops working. So we need to integrate the IVP
+numerically, across hundreds of parameter combinations.
+
+The problem is also hard for a time integrator in a specific way. Near the end of a
+collapse, Eq.~\eqref{eq:rayleigh-energy} gives $|\dot R| \propto R^{-3/2}$, so
+$R \propto (t_c - t)^{2/5}$, and the local time scale $R/|\dot R| = \tfrac{5}{2}(t_c - t)$
+shrinks to zero. In a gas-filled bubble the collapse is stopped at $R_{\min}$, but the time
+spent near the minimum is still a small fraction of the overall period, and it gets smaller
+as $\Pi$ grows. A fixed step small enough to resolve the minimum wastes most of its work
+on the slow parts of the motion, which is why we compare fixed-step RK4 with an adaptive
+embedded Runge--Kutta pair that can take small steps only where they are needed.

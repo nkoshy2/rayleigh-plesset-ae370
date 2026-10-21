@@ -67,7 +67,6 @@ latexmk -pdf main.tex
 | Naveen Koshy | nkoshy2 |
 | Ava Hoppe | arhoppe2 |
 | Alison Nazaruk | nazaruk3 |
-| TODO Member 4 | TODO |
 
 Roles and contribution estimates: [`docs/contributions.md`](docs/contributions.md).
 AI usage: [`docs/ai-usage-log.md`](docs/ai-usage-log.md).

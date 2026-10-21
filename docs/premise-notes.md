@@ -55,17 +55,17 @@ State y = [R, R'], so y' = [R', (bracket/rho - 1.5 R'^2) / R].
 
 | Symbol | Value | Confidence |
 |---|---|---|
-| rho | 998.2 kg/m^3 | high |
-| mu | 1.002e-3 Pa s | high |
-| sigma | 0.0728 N/m | high (IAPWS gives about 72.7 to 72.8 mN/m) |
-| p_v | 2.34 kPa (2.339) | high |
+| rho | 998.2 kg/m^3 (NIST: 998.207 at 1 atm) | checked |
+| mu | 1.0016e-3 Pa s (NIST: 1.00160e-3 at 1 atm) | checked |
+| sigma | 0.07274 N/m (NIST: 0.0727361, saturated) | checked |
+| p_v | 2.339 kPa (NIST: 2.33932) | checked |
 | p0 | 101.325 kPa | exact (1 atm) |
-| c (not in RP, used for validity check) | about 1482 m/s | high |
+| c (not in RP, used for validity check) | 1482 m/s (NIST: 1482.35 at 1 atm) | checked |
 | kappa | 1.4 baseline, 1.0 comparison | **modeling choice, see flags** |
 
-All of these are from memory and agree with standard tables to the digits given. **Someone
-should still check them against the NIST WebBook and record the access date** in
-`references.bib`.
+Checked against the NIST Chemistry WebBook (fluid properties, water) on 2026-10-21. The
+first draft used mu = 1.002e-3 and sigma = 0.0728; the corrections change S and Q by
+under 0.1%, so none of the derived numbers below moved at the digits shown.
 
 Sweep ranges: R0 from 1 um to 1 mm; Pi from 1.5 to 20; eps from 0.01 to 0.8;
 w/w0 from 0.2 to 3.
@@ -194,13 +194,16 @@ motivates adaptive stepping.
    resonance peaks will be sharper than in real water. We should either say so plainly or use
    an "effective viscosity". (I believe Brennen and Lauterborn & Kurz both discuss this, but
    I haven't checked the exact treatment.)
-3. **Mach number limit.** RP assumes an incompressible liquid. I wrote "about 0.1" as the
-   wall Mach number above which results are suspect. That's a rule of thumb, not a sourced
-   number. Find a citation or soften it. Keller-Miksis is the usual compressible fix, but it's
-   out of scope.
-4. **Inertial-cavitation threshold for Q2.** A common criterion is R_max/R0 >= 2. I'm fairly
-   sure this appears in the literature (associated with Flynn / Apfel), but I did not put it in
-   the report or the bib because I can't confirm the source. Check before using it.
+3. **Mach number limit (resolved, as our own choice).** The literature frames RP as the
+   zero-Mach limit and Keller-Miksis as first-order accurate in |R'|/c, but gives no single
+   cutoff. The report now states |R'|_max/c > 0.1 as *our* conservative criterion, not a
+   literature value. Keller-Miksis is out of scope.
+4. **Inertial-cavitation threshold for Q2 (partly checked).** R_max/R0 >= 2 is used as an
+   inertial-cavitation criterion in the ultrasound literature (e.g. Church et al. 2015,
+   Ultrasound Med. Biol.), and is usually traced to Apfel & Holland 1991, "Gauging the
+   likelihood of cavitation from short-pulse, low-duty cycle diagnostic ultrasound",
+   Ultrasound Med. Biol. 17, 179. I could not open the original, so it is still not in the
+   bib. If Q2 uses this criterion, get the paper through the library first.
 5. **Turbopump details.** I kept the turbopump discussion qualitative (inducer operates with
    some cavitation; erosion, head breakdown, rotating cavitation, cavitation surge). I did not
    include blade-passing frequencies or real inducer pressure ratios because I'd be guessing.
@@ -212,5 +215,6 @@ motivates adaptive stepping.
    smooth ramp could be a follow-up.
 7. **Sweep ranges.** Pi up to 20 and eps up to 0.8 are my picks. Pi = 20 may push past the
    Mach limit. eps < 1 keeps p_inf positive.
-8. **References.** `lauterborn2010` and `brennen1994pumps` have TODO notes in the bib file.
-   The NIST entry needs an access date.
+8. **References (resolved).** `lauterborn2010` (Rep. Prog. Phys. 73(10), 106501) and
+   `brennen1994pumps` (Concepts ETI and Oxford University Press, 1994) are confirmed. The
+   NIST entry has an access date.

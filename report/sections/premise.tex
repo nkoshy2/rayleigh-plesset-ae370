@@ -105,10 +105,12 @@ $(\mathrm{Pa\,s})(\mathrm{m/s})/\mathrm{m} = \mathrm{Pa}$. All terms are consist
 infinite in extent; the gas compresses polytropically with fixed $\kappa$, with no gas
 diffusion across the wall; the vapor stays at $p_v$ (evaporation and condensation are
 instantaneous); and the gas pressure is uniform inside the bubble. Incompressibility is the
-assumption most likely to fail: it requires the wall Mach number $|\dot R|/c$ to stay small,
-with $c \approx 1482\ \mathrm{m/s}$ in water. We will report $|\dot R|_{\max}/c$ for every run
-and treat cases where it approaches about $0.1$ as outside the model's range
-\todo{confirm this threshold against \cite{brennen1995} or \cite{lauterborn2010}}.
+assumption most likely to fail. Equation~\eqref{eq:rp} is the zero-Mach-number limit of the
+compressible bubble equations (Keller--Miksis, for example, adds corrections of first order
+in the wall Mach number $|\dot R|/c$) \cite{lauterborn2010}, so its error grows as the wall
+speed approaches the sound speed $c \approx 1482\ \mathrm{m/s}$ in water \cite{nistwebbook}.
+There is no single accepted cutoff, so we set our own: we report $|\dot R|_{\max}/c$ for every
+run and treat results with $|\dot R|_{\max}/c > 0.1$ as outside the model's range.
 
 \begin{table}[t]
 \centering
@@ -121,9 +123,9 @@ switched off for Q3.}
 Symbol & Meaning & Units & Baseline & Range swept \\
 \midrule
 $\rho$ & liquid density & $\mathrm{kg/m^3}$ & $998.2$ & fixed \\
-$\mu$ & dynamic viscosity & $\mathrm{Pa\,s}$ & $1.002\times10^{-3}$ & fixed, or $0$ \\
-$\sigma$ & surface tension & $\mathrm{N/m}$ & $0.0728$ & fixed, or $0$ \\
-$p_v$ & vapor pressure & $\mathrm{Pa}$ & $2.34\times10^{3}$ & fixed \\
+$\mu$ & dynamic viscosity & $\mathrm{Pa\,s}$ & $1.0016\times10^{-3}$ & fixed, or $0$ \\
+$\sigma$ & surface tension & $\mathrm{N/m}$ & $0.07274$ & fixed, or $0$ \\
+$p_v$ & vapor pressure & $\mathrm{Pa}$ & $2.339\times10^{3}$ & fixed \\
 $p_0$ & ambient pressure before the event & $\mathrm{Pa}$ & $1.01325\times10^{5}$ & fixed \\
 $\kappa$ & polytropic exponent & -- & $1.4$ & $1.0$ and $1.4$ \\
 $R_0$ & initial radius & $\mathrm{m}$ & $100\ \mu\mathrm{m}$ (B), $10\ \mu\mathrm{m}$ (C) & $1\ \mu\mathrm{m}$ to $1\ \mathrm{mm}$ \\

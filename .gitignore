@@ -34,3 +34,4 @@ Thumbs.db
 
 # Built report (rebuild with latexmk; attach the PDF to releases instead)
 report/main.pdf
+report-overleaf.zip

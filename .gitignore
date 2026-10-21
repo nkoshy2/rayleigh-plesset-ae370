@@ -31,3 +31,6 @@ report/sections/*.aux
 Thumbs.db
 .vscode/
 .idea/
+
+# Built report (rebuild with latexmk; attach the PDF to releases instead)
+report/main.pdf

@@ -1,19 +1,26 @@
 # Experiments
 
-One script per report figure. Each script imports the integrators from `src/rp/`,
-writes its figure to `../figures/`, and can be run on its own:
+One script per report figure. Each imports the model and integrators from `src/rp/`
+and writes a PDF (used by the report) and a PNG preview to `../figures/`. Run from the
+repository root after `pip install -e .`:
 
 ```
-python experiments/<script>.py
+python experiments/run_all.py              # every figure, about 2 minutes
+python experiments/fig_tolerance.py        # or one at a time
 ```
 
-Planned (names are placeholders until the figures are settled):
+Each script also prints the numbers quoted in the report.
 
-| Script | Figure | Rubric item |
-|---|---|---|
-| `fig_caseA_rayleigh_check.py` | Case A numerical vs exact R(t) and collapse time | 3 |
-| `fig_convergence_caseB.py` | Error vs step size (RK4) and vs tolerance/cost (adaptive) | 3 |
-| `fig_step_size_history.py` | Adaptive step size through collapse and rebound | 2, 3 |
-| `fig_collapse_scaling.py` | R_min/R0, peak wall speed, peak gas pressure vs pressure ratio and R0 | 4 |
-| `fig_frequency_response.py` | Steady response amplitude vs forcing frequency for several amplitudes | 4 |
-| `fig_regime_map.py` | Which term (gas, viscosity, surface tension) controls the collapse | 4 |
+| Script | Figure(s) | What it shows | Rubric |
+|---|---|---|---|
+| `fig_verification_caseA.py` | `fig_verification_caseA` | Convergence to the exact Rayleigh solution; collapse time to R = 1e-3 R0 | 3(i) |
+| `fig_convergence_caseB.py` | `fig_convergence_caseB` | Orders 4 and 5 on the full equation; energy conservation (inviscid) | 3(i) |
+| `fig_verification_caseC.py` | `fig_verification_caseC` | Small-amplitude forced response vs linear theory | 3(i) |
+| `fig_stability_stepsize.py` | `fig_stability`, `fig_stepsize` | h*lambda along real trajectories vs stability limits; adaptive step history | 2, 3(ii) |
+| `fig_tolerance.py` | `fig_tolerance` | Error of R_min, peak wall speed, peak gas pressure vs rtol | 3(ii) |
+
+Planned for the results section (rubric 4): collapse scaling with pressure ratio and R0
+(Q1), frequency response vs forcing amplitude (Q2), regime map (Q3).
+
+`common.py` holds the shared plot style (reference categorical palette in fixed order;
+a one-hue blue ramp for ordered sweeps such as the pressure ratio).

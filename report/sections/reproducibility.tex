@@ -5,4 +5,7 @@ All code is available at \url{https://github.com/nkoshy2/rayleigh-plesset-ae370}
 The integrators live in \texttt{src/rp/}, each report figure is produced by one script in
 \texttt{experiments/}, and the tests in \texttt{tests/} can be run with \texttt{pytest}.
 No library time integrator is used to advance the solution.
-\todo{Add exact commands once the code exists.}
+After \texttt{pip install -r requirements.txt} and \texttt{pip install -e .},
+the command \texttt{pytest} runs the 24 unit tests and
+\texttt{python experiments/run\_all.py} regenerates every figure in this report,
+printing the numbers quoted in the text.

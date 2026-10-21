@@ -1,7 +1,198 @@
-\section{Method}\label{sec:method}
-% Rubric item 2 (22 pts). Needs: (i) justification using accuracy, stability and cost;
-% (ii) derivation of the method with its error and stability properties;
-% (iii) an algorithmic summary of one step from t_k to t_{k+1}.
-% Plan: fixed-step RK4 as baseline, adaptive embedded RK pair as main method.
+\section{Method}
+\label{sec:method}
 
-\todo{Method section. Not started.}
+We advance the initial value problem of Section~\ref{sec:ivp} with explicit Runge--Kutta (RK) methods that we implemented ourselves. We use two of them: the classical fixed-step fourth-order method (RK4) and the adaptive Dormand--Prince 5(4) embedded pair (DP5). This section explains why that choice fits our questions, derives the methods and their error and stability properties, and gives the algorithm that takes a step from $t_k$ to $t_{k+1}$.
+
+\subsection{The problem in the form the integrator sees}
+
+It is convenient to integrate the dimensionless system of Eq.~\eqref{eq:rp-nondim}, with state $\mathbf{y}=[\tilde R,\tilde R']^{T}$ and $\tilde t$ as the independent variable. Every component is then $O(1)$ over most of the motion, so one tolerance treats both components fairly (in SI units $R\sim10^{-5}$\,m and $\dot R\sim10^{2}$\,m/s would need separate scalings). Writing $\mathbf{y}'=\mathbf{f}(\tilde t,\mathbf{y})$,
+\begin{equation}
+\mathbf{f}(\tilde t,\mathbf{y}) =
+\begin{bmatrix}
+y_2\\[2pt]
+\dfrac{1}{y_1}\left\{P_g\,y_1^{-3\kappa}-P(\tilde t)-\dfrac{S}{y_1}-\dfrac{4}{\mathrm{Re}}\dfrac{y_2}{y_1}-\dfrac32\,y_2^{2}\right\}
+\end{bmatrix},
+\qquad \mathbf{y}(0)=\begin{bmatrix}1\\0\end{bmatrix}.
+\label{eq:rhs}
+\end{equation}
+For $\tilde t>0$ the right-hand side is smooth wherever $y_1>0$. In Case~B the pressure step happens exactly at $\tilde t=0$ and $P$ is constant afterwards, so the integrator never crosses a discontinuity. In Case~C the forcing $P(\tilde t)$ is a smooth sinusoid. The only singular behavior is $y_1\to0$, which we discuss in Section~\ref{sec:method-singular}.
+
+\subsection{Why an explicit Runge--Kutta method}
+\label{sec:method-why}
+
+We judge the method on the three criteria that our questions impose.
+
+\paragraph{Accuracy.} Q1 asks for $R_{\min}/R_0$, $|\dot R|_{\max}$ and $p_{g,\max}$. These are extreme values reached in the last fraction of the collapse, where the solution changes fastest. They are also amplified by the physics: since $p_g\propto R^{-3\kappa}$, a relative error $\delta$ in $R_{\min}$ produces a relative error of about $3\kappa\,\delta$ in $p_{g,\max}$ (about $4\delta$ for $\kappa=1.4$). Q2 asks how far a resonance peak shifts with amplitude, which requires phase errors to stay small over many oscillation periods. A high-order method is the efficient way to meet both demands, because the error falls as $h^{p}$ with $p$ large.
+
+\paragraph{Stability.} Explicit methods are only efficient if the problem is not stiff. Linearizing about equilibrium (Eq.~\eqref{eq:linear}) gives eigenvalues $\lambda=-\beta\pm i\sqrt{\omega_0^2-\beta^2}$ with $\beta/\omega_0\lesssim0.1$ for $R_0\gtrsim1\,\mu$m in water. The spectrum therefore lies close to the imaginary axis with a modest real part, and there is no fast decaying mode that would force a tiny step for stability alone. The stability limit $h|\lambda|\lesssim2.8$ is far looser than the step needed to resolve the collapse, so the step size is set by accuracy, not stability. An implicit method would cost a nonlinear solve per step and buy us nothing here. The linearization is only valid near equilibrium, so we also check this along real collapse trajectories in Section~\ref{sec:impl-stability}: there $|h\lambda|$ stays below $0.17$ at every accepted step.
+
+\paragraph{Cost and a shrinking time scale.} We need hundreds of runs across $(R_0,\Pi)$ and $(\varepsilon,\omega)$. Near the end of a collapse the local time scale $\tilde R/|\tilde R'|=\tfrac52(\tilde t_c-\tilde t)$ (Section~\ref{sec:whynumerics}) shrinks toward zero, while the rest of the motion is slow. A fixed step small enough for the minimum wastes most of its steps on the slow part. An adaptive method takes small steps only where the local error requires them. One-step methods such as RK are the natural choice for this because the step size can change freely at every step. Linear multistep methods (Adams--Bashforth--Moulton) need equally spaced history and are awkward to restart each time the step changes, which would happen constantly in a collapse.
+
+\paragraph{Why two methods.} Fixed-step RK4 is simple and its order of accuracy is easy to demonstrate, so we use it for the convergence study. DP5 is the production integrator for the parameter sweeps. Comparing their cost at equal accuracy is a result in its own right.
+
+\subsection{Derivation of Runge--Kutta methods}
+\label{sec:method-derivation}
+
+Let $\mathbf{y}'=\mathbf{f}(t,\mathbf{y})$ and let $\mathbf{y}_k\approx\mathbf{y}(t_k)$ with step $h=t_{k+1}-t_k$. Integrating the ODE over one step gives the exact identity
+\begin{equation}
+\mathbf{y}(t_{k+1})=\mathbf{y}(t_k)+\int_{t_k}^{t_{k+1}}\mathbf{f}(t,\mathbf{y}(t))\,dt .
+\end{equation}
+A Runge--Kutta method replaces the integral by a quadrature rule with weights $b_i$ at nodes $t_k+c_ih$, and estimates the unknown values of $\mathbf{y}$ at those nodes by earlier stages. An $s$-stage explicit method is
+\begin{align}
+\mathbf{k}_i &= \mathbf{f}\!\Big(t_k+c_ih,\;\mathbf{y}_k+h\sum_{j=1}^{i-1}a_{ij}\mathbf{k}_j\Big),\qquad i=1,\dots,s,
+\label{eq:stages}\\
+\mathbf{y}_{k+1}&=\mathbf{y}_k+h\sum_{i=1}^{s}b_i\mathbf{k}_i ,
+\label{eq:update}
+\end{align}
+where $c_i=\sum_j a_{ij}$. The coefficients are collected in a Butcher tableau. They are chosen so that the Taylor expansion of $\mathbf{y}_{k+1}$ in powers of $h$ agrees with the Taylor expansion of the exact solution $\mathbf{y}(t_{k+1})$ through as many orders as possible. Matching the terms up to $h^p$ gives the order conditions. For $p\le4$ they are, with the sums running over all stage indices,
+\begin{equation}
+\begin{aligned}
+&\textstyle\sum_i b_i=1, &&\textstyle\sum_i b_ic_i=\tfrac12,\\
+&\textstyle\sum_i b_ic_i^2=\tfrac13, &&\textstyle\sum_{i,j} b_ia_{ij}c_j=\tfrac16,\\
+&\textstyle\sum_i b_ic_i^3=\tfrac14, &&\textstyle\sum_{i,j} b_ic_ia_{ij}c_j=\tfrac18,\\
+&\textstyle\sum_{i,j} b_ia_{ij}c_j^2=\tfrac1{12}, &&\textstyle\sum_{i,j,l} b_ia_{ij}a_{jl}c_l=\tfrac1{24}.
+\end{aligned}
+\label{eq:order}
+\end{equation}
+The first condition gives order~1 (consistency), the first two give order~2, the first four give order~3, and all eight give order~4 \cite{hairer1993,butcher2016}.
+
+\paragraph{Classical RK4.} The choice $c=(0,\tfrac12,\tfrac12,1)$, $a_{21}=a_{32}=\tfrac12$, $a_{43}=1$ and $b=(\tfrac16,\tfrac13,\tfrac13,\tfrac16)$ satisfies all eight conditions in Eq.~\eqref{eq:order}. For example,
+\[
+\textstyle\sum_i b_ic_i=\tfrac13\cdot\tfrac12+\tfrac13\cdot\tfrac12+\tfrac16\cdot1=\tfrac12,\qquad
+\sum_{i,j,l} b_ia_{ij}a_{jl}c_l=b_4a_{43}a_{32}c_2=\tfrac16\cdot1\cdot\tfrac12\cdot\tfrac12=\tfrac1{24}.
+\]
+Written out, one step of RK4 is
+\begin{equation}
+\begin{aligned}
+\mathbf{k}_1&=\mathbf{f}(t_k,\mathbf{y}_k), &
+\mathbf{k}_2&=\mathbf{f}(t_k+\tfrac h2,\mathbf{y}_k+\tfrac h2\mathbf{k}_1),\\
+\mathbf{k}_3&=\mathbf{f}(t_k+\tfrac h2,\mathbf{y}_k+\tfrac h2\mathbf{k}_2), &
+\mathbf{k}_4&=\mathbf{f}(t_k+h,\mathbf{y}_k+h\mathbf{k}_3),\\
+&&\mathbf{y}_{k+1}&=\mathbf{y}_k+\tfrac h6\,(\mathbf{k}_1+2\mathbf{k}_2+2\mathbf{k}_3+\mathbf{k}_4).
+\end{aligned}
+\end{equation}
+
+\paragraph{Embedded pairs and Dormand--Prince 5(4).} An embedded pair uses one set of stages $\mathbf{k}_i$ and two sets of weights, $b_i$ of order $p$ and $b_i^{*}$ of order $p-1$:
+\begin{equation}
+\mathbf{y}_{k+1}=\mathbf{y}_k+h\sum_i b_i\mathbf{k}_i,\qquad
+\mathbf{y}^{*}_{k+1}=\mathbf{y}_k+h\sum_i b^{*}_i\mathbf{k}_i .
+\end{equation}
+The two results come from the same stages, so the second costs almost nothing. DP5 \cite{dormand1980} has $s=7$ stages with $p=5$, and its coefficients are in Table~\ref{tab:dp5}. It has the first-same-as-last (FSAL) property: the last stage $\mathbf{k}_7=\mathbf{f}(t_{k+1},\mathbf{y}_{k+1})$ equals $\mathbf{k}_1$ of the next step, so an accepted step costs six new evaluations of $\mathbf{f}$, not seven.
+
+\begin{table}[ht]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{c|ccccccc}
+$0$ & & & & & & & \\
+$\tfrac15$ & $\tfrac15$ & & & & & & \\
+$\tfrac3{10}$ & $\tfrac3{40}$ & $\tfrac9{40}$ & & & & & \\
+$\tfrac45$ & $\tfrac{44}{45}$ & $-\tfrac{56}{15}$ & $\tfrac{32}{9}$ & & & & \\
+$\tfrac89$ & $\tfrac{19372}{6561}$ & $-\tfrac{25360}{2187}$ & $\tfrac{64448}{6561}$ & $-\tfrac{212}{729}$ & & & \\
+$1$ & $\tfrac{9017}{3168}$ & $-\tfrac{355}{33}$ & $\tfrac{46732}{5247}$ & $\tfrac{49}{176}$ & $-\tfrac{5103}{18656}$ & & \\
+$1$ & $\tfrac{35}{384}$ & $0$ & $\tfrac{500}{1113}$ & $\tfrac{125}{192}$ & $-\tfrac{2187}{6784}$ & $\tfrac{11}{84}$ & \\
+\hline
+$b_i$ (order 5) & $\tfrac{35}{384}$ & $0$ & $\tfrac{500}{1113}$ & $\tfrac{125}{192}$ & $-\tfrac{2187}{6784}$ & $\tfrac{11}{84}$ & $0$ \\
+$b_i^{*}$ (order 4) & $\tfrac{5179}{57600}$ & $0$ & $\tfrac{7571}{16695}$ & $\tfrac{393}{640}$ & $-\tfrac{92097}{339200}$ & $\tfrac{187}{2100}$ & $\tfrac1{40}$
+\end{tabular}
+\caption{Butcher tableau of the Dormand--Prince 5(4) pair. The first column holds the nodes $c_i$ and the entries to its right are $a_{ij}$; the last two rows are the weights.}
+\label{tab:dp5}
+\end{table}
+
+\subsection{Error properties}
+\label{sec:method-error}
+
+Subtracting the Taylor expansions of the numerical and exact solutions, a method of order $p$ has a local truncation error (error made in one step starting from the exact solution)
+\begin{equation}
+\boldsymbol{\tau}_{k+1}=\mathbf{y}(t_{k+1})-\hat{\mathbf{y}}_{k+1}=C(t_k)\,h^{p+1}+O(h^{p+2}),
+\end{equation}
+where $C$ depends on the elementary differentials of $\mathbf{f}$ at the order-$(p+1)$ trees, which the method's coefficients fail to match. Over a fixed interval $[0,T]$ there are $T/h$ steps. If $\mathbf{f}$ is Lipschitz with constant $L$ and sufficiently smooth on the region the trajectory visits, the local errors accumulate (each amplified by at most $e^{LT}$) into a global error
+\begin{equation}
+\|\mathbf{y}(t_k)-\mathbf{y}_k\|\le \frac{C_{\max}}{L}\left(e^{LT}-1\right)h^{p}=O(h^{p}) .
+\end{equation}
+So RK4 is globally fourth order ($p=4$) and DP5 is fifth order ($p=5$). This is the slope we test in Section~\ref{sec:implementation}. Two caveats matter here. First, the constants $C$ and $L$ grow without bound as $\tilde R\to0$, because $\mathbf{f}$ is not Lipschitz there. The $h^p$ rate holds only once $h$ is small enough to resolve the minimum, and the convergence study needs to be done in that regime. Second, the factor $e^{LT}$ makes the bound very pessimistic for long runs. For the many-period oscillations of Case~C the error in practice accumulates mainly as phase error, which grows roughly linearly with the number of periods, so it is the phase error that sets $h$ there.
+
+\paragraph{Error estimate for the adaptive pair.} Since $\mathbf{y}_{k+1}$ is fifth order and $\mathbf{y}^{*}_{k+1}$ is fourth order,
+\begin{equation}
+\mathbf{y}^{*}_{k+1}-\mathbf{y}_{k+1}=\big(\mathbf{y}^{*}_{k+1}-\hat{\mathbf{y}}_{k+1}\big)-\big(\mathbf{y}_{k+1}-\hat{\mathbf{y}}_{k+1}\big)=O(h^{5}),
+\end{equation}
+dominated by the local error of the fourth-order solution. The difference
+\begin{equation}
+\mathbf{e}_{k+1}=h\sum_{i=1}^{7}\big(b_i-b_i^{*}\big)\mathbf{k}_i
+\end{equation}
+is therefore a computable estimate of the local error, with no extra evaluations of $\mathbf{f}$. We then advance with the more accurate fifth-order value $\mathbf{y}_{k+1}$ (local extrapolation). This makes the estimate slightly conservative.
+
+\subsection{Stability properties}
+\label{sec:method-stability}
+
+Applying an explicit RK method to the test equation $y'=\lambda y$ gives $y_{k+1}=R(z)\,y_k$ with $z=h\lambda$, where $R$ is a polynomial. The method is absolutely stable when $|R(z)|\le1$. For RK4 ($s=p=4$),
+\begin{equation}
+R_{\mathrm{RK4}}(z)=1+z+\frac{z^2}{2}+\frac{z^3}{6}+\frac{z^4}{24},
+\end{equation}
+and for DP5
+\begin{equation}
+R_{\mathrm{DP5}}(z)=1+z+\frac{z^2}{2}+\frac{z^3}{6}+\frac{z^4}{24}+\frac{z^5}{120}+\frac{z^6}{600}.
+\end{equation}
+The stability interval on the negative real axis is about $z\in[-2.78,0]$ for RK4 and about $[-3.3,0]$ for DP5. The imaginary axis matters for us because the linearized bubble oscillator has eigenvalues near it (Section~\ref{sec:method-why}). RK4 contains the imaginary segment $|{\rm Im}\,z|\le2\sqrt2\approx2.83$. Because $|R_{\mathrm{RK4}}(i\theta)|^2=1-\theta^6/72+\theta^8/576<1$ for small $\theta\neq0$, RK4 adds a small numerical damping of about $\theta^6/144$ per step to an undamped oscillation, which is $O(h^5)$ per unit time; its phase error, $\theta^5/120$ per step, is $O(h^4)$ per unit time and is the larger of the two. DP5 behaves differently: $|R_{\mathrm{DP5}}(iy)|\le1$ only for $|y|\lesssim0.998$, and for larger $|y|$ it slowly amplifies an undamped oscillation. So for DP5 the binding limit on oscillatory modes is $|h\lambda|<1$, not the real-axis value $3.3$. In our runs the accuracy-limited step keeps $|h\lambda|$ several times below this (Section~\ref{sec:impl-stability}), so accuracy, not stability, is the binding constraint for both methods.
+
+\subsection{Adaptive step-size control}
+\label{sec:method-adaptive}
+
+Let $\mathrm{atol}$ and $\mathrm{rtol}$ be absolute and relative tolerances. For each component $i$ of the state, define the scale
+\begin{equation}
+\mathrm{sc}_i=\mathrm{atol}+\mathrm{rtol}\cdot\max\!\big(|y_{k,i}|,\,|y_{k+1,i}|\big),
+\end{equation}
+and the scaled error norm
+\begin{equation}
+E=\sqrt{\frac1n\sum_{i=1}^{n}\left(\frac{e_{k+1,i}}{\mathrm{sc}_i}\right)^{2}},\qquad n=2 .
+\end{equation}
+The step is accepted if $E\le1$ and rejected otherwise. Because the local error behaves like $E\propto h^{5}$, the step size that would give $E=1$ is $h\,E^{-1/5}$. The next step is therefore
+\begin{equation}
+h_{\mathrm{new}}=h\cdot\min\!\Big(f_{\max},\,\max\!\big(f_{\min},\;\gamma\,E^{-1/5}\big)\Big),
+\end{equation}
+with a safety factor $\gamma=0.9$, and limits $f_{\min}=0.2$, $f_{\max}=5$ that stop the step from changing too abruptly. After a rejected step the factor is also capped at $1$. We control the \emph{local} error per step, not the global error, so the global error is typically a modest multiple of the tolerance and can grow in long runs; we measure it against the exact and conservation checks of Section~\ref{sec:implementation} and do not assume it equals the tolerance. The first step is chosen with the standard starting-step estimate of \cite{hairer1993} (one extra evaluation of $\mathbf{f}$), and the last step is shortened to land exactly on the final time. Based on Section~\ref{sec:impl-params} we use $\mathrm{rtol}=10^{-8}$ and $\mathrm{atol}=10^{-10}$ for all production runs.
+
+\subsection{Handling the collapse singularity}
+\label{sec:method-singular}
+
+As $\tilde R\to0$ the right-hand side of Eq.~\eqref{eq:rhs} blows up. For a gas bubble the gas pressure stops the collapse at a finite $\tilde R_{\min}>0$, so a solution exists and the adaptive controller shrinks $h$ automatically as the local time scale shrinks. We add three safeguards. (i) A step that produces $y_1\le0$ or a non-finite value is rejected and retried with a quarter of the step. (ii) The step is bounded below by $h_{\min}$, and the run is flagged as unreliable if $h_{\min}$ is reached. (iii) In Case~A (empty cavity) the true solution is singular at $\tilde t_c$, so we stop the integration when $\tilde R$ first falls below a chosen final radius and compare there, as described in Section~\ref{sec:cases}. To locate $\tilde R_{\min}$ and $|\tilde R'|_{\max}$ more accurately than the grid allows, we treat them as events: $\tilde R_{\min}$ is where $\tilde R'$ crosses zero from below and $|\tilde R'|_{\max}$ is where $\tilde R''$ does. When an accepted step brackets a sign change, we find the root by the Illinois (modified regula falsi) method, evaluating each trial point by re-taking a DP5 step of the trial length from $\tilde t_k$. Every trial value is then a genuine fifth-order solution, so the located extrema are as accurate as the steps themselves, which a cubic Hermite interpolant ($O(h^4)$) would not guarantee. Case~A's stopping radius is found the same way. We do not use a library integrator at any point.
+
+\subsection{Algorithm}
+\label{sec:method-algorithm}
+
+Algorithm~\ref{alg:rk4} advances one fixed step, and Algorithm~\ref{alg:dp5} advances one adaptive step from $\tilde t_k$ to $\tilde t_{k+1}$. Here $\mathbf{f}$ is Eq.~\eqref{eq:rhs}.
+
+\begin{algorithm}[ht]
+\caption{One step of RK4: $(t_k,\mathbf{y}_k,h)\mapsto(t_{k+1},\mathbf{y}_{k+1})$}
+\label{alg:rk4}
+
+\begin{algorithmic}[1]
+\State $\mathbf{k}_1\gets\mathbf{f}(t_k,\mathbf{y}_k)$
+\State $\mathbf{k}_2\gets\mathbf{f}(t_k+h/2,\;\mathbf{y}_k+\tfrac h2\mathbf{k}_1)$
+\State $\mathbf{k}_3\gets\mathbf{f}(t_k+h/2,\;\mathbf{y}_k+\tfrac h2\mathbf{k}_2)$
+\State $\mathbf{k}_4\gets\mathbf{f}(t_k+h,\;\mathbf{y}_k+h\mathbf{k}_3)$
+\State $\mathbf{y}_{k+1}\gets\mathbf{y}_k+\tfrac h6(\mathbf{k}_1+2\mathbf{k}_2+2\mathbf{k}_3+\mathbf{k}_4)$;\quad $t_{k+1}\gets t_k+h$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[ht]
+\caption{One adaptive DP5 step from $t_k$ (with $\mathbf{k}_1=\mathbf{f}(t_k,\mathbf{y}_k)$ carried over by FSAL)}
+\label{alg:dp5}
+\begin{algorithmic}[1]
+\Repeat
+  \State $h\gets\min(h,\,t_{\mathrm{end}}-t_k)$
+  \State compute $\mathbf{k}_2,\dots,\mathbf{k}_7$ from Eq.~\eqref{eq:stages} using Table~\ref{tab:dp5}
+  \State $\mathbf{y}_{k+1}\gets\mathbf{y}_k+h\sum_i b_i\mathbf{k}_i$ \hfill (fifth order)
+  \State $\mathbf{e}\gets h\sum_i (b_i-b_i^{*})\mathbf{k}_i$; \quad compute $E$ from the scaled norm
+  \State $h_{\mathrm{new}}\gets h\cdot\min\!\big(f_{\max},\max(f_{\min},\gamma E^{-1/5})\big)$
+  \If{$E\le1$ \textbf{and} $y_{k+1,1}>0$}
+     \State accept: $t_{k+1}\gets t_k+h$;\quad $\mathbf{k}_1\gets\mathbf{k}_7$;\quad $h\gets h_{\mathrm{new}}$
+  \Else
+     \State reject: $h\gets\min(h_{\mathrm{new}},\,h)$, or $h/4$ if $y_{k+1,1}\le0$ \hfill (if $h<h_{\min}$, flag and stop)
+  \EndIf
+\Until{step accepted}
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Cost.} RK4 costs four evaluations of $\mathbf{f}$ per step and DP5 six per accepted step (plus six for each rejected step). Counting evaluations of $\mathbf{f}$ is a machine-independent measure of cost, and we report it for every run so that fixed-step RK4 and adaptive DP5 can be compared at equal accuracy.

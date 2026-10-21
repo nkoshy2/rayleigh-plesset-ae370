@@ -1,8 +1,178 @@
 \section{Correct implementation}\label{sec:implementation}
-% Rubric item 3 (22 pts). Needs:
-% (i) convergence at the expected rate AND convergence to the right answer
-%     (Case A exact collapse time and R(t); energy conservation for inviscid Case B;
-%     small-amplitude linear response for Case C);
-% (ii) which step size / tolerance is needed to study the problem accurately.
 
-\todo{Implementation and verification section. Not started.}
+We wrote both integrators ourselves in Python with NumPy; no library time
+integrator is called anywhere. The code separates the method from the problem:
+\texttt{src/rp/integrators.py} holds RK4, DP5 with a fixed step, and adaptive
+DP5 (Algorithms~\ref{alg:rk4} and~\ref{alg:dp5}), each taking a generic
+right-hand side $\mathbf{f}(t,\mathbf{y})$ and counting its evaluations;
+\texttt{src/rp/model.py} holds Eq.~\eqref{eq:rhs}, its Jacobian, the three test
+cases and the reference solutions; and every figure below is produced by one
+script in \texttt{experiments/}. A suite of 24 unit tests (\texttt{pytest})
+checks the Butcher tableaus against the order conditions of
+Eq.~\eqref{eq:order} (and the nine fifth-order conditions for DP5), the
+stability polynomials, the nondimensionalization against the SI form of
+Eq.~\eqref{eq:rp}, and each verification result reported here.
+
+The rubric asks for two things: that the method converges at the expected rate,
+and that it converges to the solution of the right equations. A convergence
+study against a fine-step reference shows only the first, since a wrong term in
+$\mathbf{f}$ converges just as cleanly. We therefore check the answer against
+three things we know independently of our solver, one per test case
+(Section~\ref{sec:impl-verify}), before measuring rates on the full problem
+(Section~\ref{sec:impl-rate}).
+
+\subsection{Converging to the right answer}\label{sec:impl-verify}
+
+\paragraph{Case A: exact Rayleigh collapse.} For the empty cavity, Eq.~\eqref{eq:rayleigh-t}
+gives the exact time to reach any radius. We evaluate its integral by
+Gauss--Legendre quadrature after the substitution $x=1-s^2$, which removes the
+endpoint singularity; this reproduces $\tilde t_c=0.9146813565$ to $10^{-14}$
+and is independent of any time stepping. Figure~\ref{fig:caseA}(a) integrates
+to the exact time $\tilde t^*=0.825457$ at which $\tilde R=0.5$ and plots the
+error in $\tilde R(\tilde t^*)$. Both fixed-step methods converge to the exact
+value, with observed orders $3.99$ (RK4) and $4.97$ (DP5) from the two finest
+steps. Deeper into the collapse the derivatives of $\mathbf{f}$ grow and the
+asymptotic range starts at smaller $h$, as Section~\ref{sec:method-error}
+anticipates: at $\tilde R=0.2$ the same runs give orders $3.93$ and $4.3$.
+Adaptive DP5 has no such difficulty. Run with $\mathrm{rtol}=10^{-12}$ until
+$\tilde R=10^{-3}$, where $|\tilde R'|\approx2.6\times10^{4}$, it reaches that
+radius at a time that differs from the exact one by $7\times10^{-14}$, and the
+state there satisfies the first integral Eq.~\eqref{eq:rayleigh-energy} to
+$10^{-8}$.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig_verification_caseA.pdf}
+  \caption{Case A (empty cavity) against the exact Rayleigh solution at
+  $\tilde R=0.5$. (a) Fixed-step error versus step size, with $h^4$ and $h^5$
+  reference slopes. (b) The same error versus cost, including adaptive DP5 at
+  $\mathrm{rtol}=10^{-4}$ to $10^{-12}$.}
+  \label{fig:caseA}
+\end{figure}
+
+\paragraph{Case B: energy conservation.} With $\mu=0$, the energy of
+Eq.~\eqref{eq:energy} is exactly conserved, so its drift measures how well we
+solve the actual equations, gas and surface-tension terms included. For
+$\Pi=10$ over $0\le\tilde t\le8$ (about four collapse and rebound cycles), the
+maximum relative drift falls from $2.6\times10^{-3}$ to $4.6\times10^{-10}$ as
+RK4 is refined from 400 to 12{,}800 steps, a factor of about $2^{4.3}$ per
+halving, and adaptive DP5 reaches $3\times10^{-12}$ at $\mathrm{rtol}=10^{-12}$
+(Fig.~\ref{fig:caseB}(b)).
+
+\paragraph{Case C: linear response.} At $\varepsilon=10^{-4}$ the forced response
+is linear to $O(\varepsilon)$, so the steady amplitude from the full nonlinear
+equation must match the damped, driven oscillator of Eq.~\eqref{eq:linear}. For
+$R_0=10\ \mu$m we integrate for 700 time units (about 13 damping times) and
+measure the amplitude over the next 40 periods. Across
+$0.5\le\omega/\omega_0\le2$, including the resonance peak where the amplitude
+is twelve times the static response, the numerical and linear amplitudes agree
+to better than $1.4\times10^{-4}$ (Fig.~\ref{fig:caseC}), and to better than
+$5\times10^{-5}$ at all but the highest frequency. The run also reproduces the
+values from the premise: $\omega_0 t_R=2.161$, $f_0=342.5$\,kHz and $Q=53.6$.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig_verification_caseC.pdf}
+  \caption{Case C at $\varepsilon=10^{-4}$, $R_0=10\ \mu$m. (a) Steady amplitude
+  from the full equation (markers) and from linear theory, Eq.~\eqref{eq:linear}
+  (line). (b) Relative difference.}
+  \label{fig:caseC}
+\end{figure}
+
+\subsection{Convergence rate on the full problem}\label{sec:impl-rate}
+
+Figure~\ref{fig:caseB}(a) uses the baseline Case B ($R_0=100\ \mu$m, $\Pi=5$,
+all physics on) and measures the error in $\tilde R$ at $\tilde t=3$, after the
+first collapse and into the rebound, against an adaptive DP5 reference at
+$\mathrm{rtol}=10^{-13}$. The observed orders are $3.96$ for RK4 and $4.97$ for
+fixed-step DP5, matching $p=4$ and $p=5$. The curves are irregular at the
+coarsest steps, where a step is comparable to the time spent near $R_{\min}$;
+this is the pre-asymptotic regime of Section~\ref{sec:method-error}.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig_convergence_caseB.pdf}
+  \caption{Case B. (a) Fixed-step error at $\tilde t=3$ for $\Pi=5$ with all
+  physics on, against a tight-tolerance reference. (b) Maximum relative drift
+  of the conserved energy, Eq.~\eqref{eq:energy}, for an inviscid collapse at
+  $\Pi=10$.}
+  \label{fig:caseB}
+\end{figure}
+
+\subsection{Stability along collapse trajectories}\label{sec:impl-stability}
+
+Section~\ref{sec:method-why} argued from the linearization about equilibrium
+that the problem is not stiff. Figure~\ref{fig:stability} checks this where it
+matters, during violent motion. At every accepted DP5 step
+($\mathrm{rtol}=10^{-8}$) of a Case B collapse at $\Pi=20$ and of 20 forcing
+periods of Case C at $\varepsilon=0.3$, we compute the eigenvalues $\lambda$ of
+the analytic Jacobian of Eq.~\eqref{eq:rhs} and plot $h\lambda$. The largest
+value is $|h\lambda|=0.16$, against stability limits of $2.79$ (RK4, real
+axis), $2.83$ (RK4, imaginary axis), $3.31$ (DP5, real axis) and $1.00$ (DP5,
+imaginary axis). The step is therefore always set by accuracy. Panel (b) also
+shows how the controller works: $|h\lambda|$ stays near $0.1$ throughout, so
+the step shrinks in proportion to the local time scale $1/|\lambda|$. Some
+eigenvalues have positive real part during the collapse. That is the physical
+growth of the collapsing motion, which an accurate method has to follow, not a
+numerical instability.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig_stability.pdf}
+  \caption{(a) Stability boundaries $|R(z)|=1$ of RK4 and DP5 with the scaled
+  eigenvalues $h\lambda$ from every accepted DP5 step of Case B ($\Pi=20$) and
+  Case C ($\varepsilon=0.3$, $\omega=\omega_0$). (b) Largest $|h\lambda|$ per
+  step against the tightest limit of each method. Case C time is rescaled to
+  share the axis.}
+  \label{fig:stability}
+\end{figure}
+
+\subsection{Choosing the simulation parameters}\label{sec:impl-params}
+
+Q1 needs $R_{\min}$, the peak inward wall speed and the peak gas pressure. The
+last is the most sensitive, because $p_{g,\max}\propto R_{\min}^{-3\kappa}$
+amplifies relative errors by about $4.2$. Figure~\ref{fig:tolerance} measures
+all three against a reference at $\mathrm{rtol}=10^{-13}$ for the pressure
+ratios we will sweep. To keep every quantity within $10^{-6}$ of the reference,
+far below what a plot can show, $\mathrm{rtol}=10^{-7}$ is enough for all
+$\Pi$. We use $\mathrm{rtol}=10^{-8}$ and $\mathrm{atol}=10^{-10}$ for a
+margin of ten: the worst error is then $1.3\times10^{-7}$ (peak gas pressure at
+$\Pi=20$), and a run to the first collapse costs only 270 to 510 evaluations of
+$\mathbf{f}$. The extrema are located by the event search of
+Section~\ref{sec:method-singular}, so they inherit this accuracy instead of
+being limited by where the steps happen to fall.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig_tolerance.pdf}
+  \caption{Relative error of the Q1 quantities versus DP5 tolerance for Case B
+  at $R_0=100\ \mu$m, measured against $\mathrm{rtol}=10^{-13}$. Dashed line:
+  the $10^{-6}$ accuracy target.}
+  \label{fig:tolerance}
+\end{figure}
+
+Adaptivity pays off most in the strongest collapses. For $\Pi=20$
+(Fig.~\ref{fig:stepsize}) the accepted step varies by a factor of 166, from
+$6.8\times10^{-2}$ to $4.1\times10^{-4}$ (in units of $t_R$), shrinking sharply
+in the brief interval around each minimum. DP5 reaches an error of
+$9\times10^{-9}$ at $\tilde t=3$ with 1{,}508 evaluations (221 accepted and 30
+rejected steps). Fixed-step RK4 needs about 5{,}500 steps, or 21{,}900
+evaluations, for the same error, so the adaptive method is about 15 times
+cheaper here, and the gap widens as $\Pi$ grows. Hence we use fixed-step RK4
+only for the convergence studies above, and adaptive DP5 for every result in
+Section~\ref{sec:results}.
+
+One finding matters for the results: at $\Pi=20$ the peak wall Mach number is
+$|\dot R|_{\max}/c=0.14$, above the cutoff of $0.1$ set in
+Section~\ref{sec:ivp}. The upper end of our planned $\Pi$ range is therefore
+outside the model's validity, and we will mark it as such in
+Section~\ref{sec:results}.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=0.62\textwidth]{fig_stepsize.pdf}
+  \caption{Case B at $\Pi=20$: radius and accepted DP5 step size
+  ($\mathrm{rtol}=10^{-8}$). The step collapses by two orders of magnitude
+  around each minimum of $R$.}
+  \label{fig:stepsize}
+\end{figure}

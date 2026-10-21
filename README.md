@@ -22,20 +22,23 @@ working notes in [`docs/premise-notes.md`](docs/premise-notes.md).
 ## Repository layout
 
 ```
-src/rp/          Model (RHS) and from-scratch integrators (RK4, adaptive embedded RK)
-tests/           Unit tests (pytest)
-experiments/     One script per report figure
-figures/         Figures produced by experiments/ and used in the report
-report/          LaTeX report: main.tex, references.bib, sections/
-docs/            Project statement, premise notes, AI usage log, contributions
+src/rp/
+  model.py         Dimensionless Rayleigh-Plesset RHS, Jacobian, test cases A/B/C,
+                   exact and reference solutions (Rayleigh time, energy, linear response)
+  integrators.py   From-scratch RK4, fixed-step DP5, adaptive Dormand-Prince 5(4)
+                   with FSAL, step-size control and event location
+  diagnostics.py   Collapse quantities: R_min, peak wall speed, peak gas pressure, Mach
+tests/             Unit tests (pytest)
+experiments/       One script per report figure, plus run_all.py
+figures/           Figure PDFs produced by experiments/ and used in the report
+report/            LaTeX report: main.tex, references.bib, sections/
+docs/              Project statement, premise notes, AI usage log, contributions
 ```
 
 No time integrator from an outside library (for example `scipy.integrate.solve_ivp`) is used
 to advance the solution. That is a project requirement.
 
 ## Install
-
-Placeholder until the code exists. Planned:
 
 ```
 python -m venv .venv
@@ -46,19 +49,33 @@ pip install -e .
 
 ## Run
 
-Placeholder. Planned:
-
 ```
-pytest                                    # tests
-python experiments/fig_convergence_caseB.py   # one figure, written to figures/
+pytest                              # 24 tests, a few seconds
+python experiments/run_all.py       # regenerate every figure in figures/ (about 2 minutes)
+```
+
+A minimal example:
+
+```python
+import numpy as np
+from rp.model import case_B, rhs
+from rp.integrators import dp5
+
+prm = case_B(R0=100e-6, Pi=5.0)            # bubble hit by a 5x pressure step
+sol = dp5(lambda t, y: rhs(t, y, prm), (0.0, 3.0), [1.0, 0.0],
+          rtol=1e-8, atol=1e-10, positive=0)
+print(sol.y[:, 0].min(), sol.nfev)         # R_min / R0 and cost
 ```
 
 To build the report (needs a LaTeX install, for example TeX Live or MiKTeX):
 
 ```
 cd report
-latexmk -pdf main.tex
+pdflatex main && bibtex main && pdflatex main && pdflatex main
 ```
+
+To upload to Overleaf, run `python report/make_overleaf_zip.py` and upload the
+`report-overleaf.zip` it writes (sources plus figure PDFs).
 
 ## Team
 

@@ -3,11 +3,17 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
-\usepackage{amsmath,amssymb}
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{graphicx}
+\usepackage{float}
+\usepackage[section]{placeins}  % keep floats inside their own section
 \usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage[numbers,sort&compress]{natbib}
+% hyperref goes last
 \usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
 
 % ../figures/ for a local build from the repo; figures/ for an Overleaf upload
@@ -19,7 +25,7 @@
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
 \title{Cavitation Bubble Collapse:\\ Rayleigh--Plesset Dynamics with an Adaptive Runge--Kutta Integrator}
-\author{TODO Member 1 \and TODO Member 2 \and TODO Member 3 \and TODO Member 4}
+\author{Naveen Koshy \and Ava Hoppe \and Alison Nazaruk}
 \date{AE 370, Aerospace Numerical Methods, Fall 2026, Project 1\\ \today}
 
 \begin{document}

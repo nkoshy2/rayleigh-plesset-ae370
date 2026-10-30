@@ -32,8 +32,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Built report (rebuild with latexmk; attach the PDF to releases instead)
-report/main.pdf
+# Overleaf upload bundle (rebuild with report/make_overleaf_zip.py)
 report-overleaf.zip
 
 # PNG previews of the figures (the report uses the PDFs)

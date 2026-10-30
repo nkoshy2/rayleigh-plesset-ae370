@@ -16,6 +16,8 @@ We use the solver to ask how hard a bubble collapses as a function of its size a
 pressure jump it sees, how it responds to oscillating pressure, and which physics controls the
 collapse in which regime.
 
+**The submitted report is [`report/main.pdf`](report/main.pdf).**
+
 The full premise is in [`report/sections/premise.tex`](report/sections/premise.tex), with
 working notes in [`docs/premise-notes.md`](docs/premise-notes.md).
 

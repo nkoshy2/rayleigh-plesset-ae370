@@ -23,7 +23,8 @@ VARIANTS = [("Full model", {}, BLUE),
 def main():
     results = {}
     for name, kw, _ in VARIANTS:
-        results[name] = [first_collapse(case_B(R0=R0, Pi=PI, **kw)).x_min
+        results[name] = [first_collapse(case_B(R0=R0, Pi=PI, **kw), rtol=1e-8,
+                                         atol=1e-10).x_min
                          for R0 in R0S]
     print(f"R_min / R0 at Pi = {PI:g}")
     for i, R0 in enumerate(R0S):

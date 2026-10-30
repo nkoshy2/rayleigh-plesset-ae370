@@ -26,7 +26,7 @@ def main():
               f"{'p_g,max MPa':>12} {'Mach':>7}")
         for Pi in PIS:
             prm = case_B(R0=R0, Pi=Pi)
-            c = first_collapse(prm)
+            c = first_collapse(prm, rtol=1e-8, atol=1e-10)
             speed = abs(c.v_min) * prm.u_R
             rows.append((Pi, c.x_min, c.p_g_max / 1e6))
             print(f"  {Pi:>4g} {c.x_min:>9.4f} {speed:>14.2f} "

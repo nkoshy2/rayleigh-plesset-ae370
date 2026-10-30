@@ -37,25 +37,24 @@ model leaves that out.
   A nucleus that has settled to equilibrium in the low-pressure region near a blade is
   suddenly exposed to a higher recovery pressure. How do the minimum radius
   $R_{\min}/R_0$, the peak inward wall speed $|\dot R|_{\max}$ and the peak gas pressure
-  $p_{g,\max}$ scale with the pressure ratio $\Pi = p_1/p_0$ and the initial radius $R_0$?
-  At what pressure ratio does the gas inside stop mattering, so that the collapse looks like
-  the empty-cavity Rayleigh limit until the very end?
+  $p_{g,\max}$ scale with the pressure ratio $\Pi = p_1/p_0$ and the initial radius $R_0$,
+  and where does the predicted collapse become too fast for the incompressible model?
 
   \item[\textbf{Q2.}] \textbf{How does a bubble respond to oscillating pressure, and where does it
   stop behaving linearly?} With the ambient pressure oscillating at frequency $\omega$ and
-  relative amplitude $\varepsilon$, where is the resonance peak, and how far does it shift
-  from the small-amplitude natural frequency $\omega_0$ as $\varepsilon$ grows? At what
-  amplitude does the response turn from gentle oscillation into large growth followed by
-  violent collapse?
+  relative amplitude $\varepsilon$, how does the steady response near the small-amplitude
+  natural frequency $\omega_0$ change as $\varepsilon$ grows? Does the frequency of largest
+  response move away from $\omega_0$, and does the oscillation become asymmetric, with
+  larger growth than compression?
 
   \item[\textbf{Q3.}] \textbf{Which physics controls the collapse, and when?} Gas compression,
-  viscosity and surface tension all resist collapse. Over the range of $R_0$ and $\Pi$ we
-  sweep, which one sets $R_{\min}$ and the peak pressure? We answer this by switching terms
-  off one at a time and comparing against the dimensionless groups of
-  Section~\ref{sec:nondim}.
+  viscosity and surface tension all resist collapse. How much do viscosity and surface
+  tension each change $R_{\min}$, and how does that depend on the bubble size $R_0$? We
+  answer this by switching each term off in turn and comparing against the dimensionless
+  groups of Section~\ref{sec:nondim}.
 \end{enumerate}
 
-Q1 and Q2 are the core of the project; Q3 is a stretch goal that reuses the same runs.
+Q1 and Q2 are the core of the project; Q3 is a smaller study built on the Case B setup of Q1.
 None of these questions can be answered from a closed-form solution, as explained in
 Section~\ref{sec:whynumerics}.
 
@@ -127,11 +126,11 @@ $\mu$ & dynamic viscosity & $\mathrm{Pa\,s}$ & $1.0016\times10^{-3}$ & fixed, or
 $\sigma$ & surface tension & $\mathrm{N/m}$ & $0.07274$ & fixed, or $0$ \\
 $p_v$ & vapor pressure & $\mathrm{Pa}$ & $2.339\times10^{3}$ & fixed \\
 $p_0$ & ambient pressure before the event & $\mathrm{Pa}$ & $1.01325\times10^{5}$ & fixed \\
-$\kappa$ & polytropic exponent & -- & $1.4$ & $1.0$ and $1.4$ \\
+$\kappa$ & polytropic exponent & -- & $1.4$ & fixed \\
 $R_0$ & initial radius & $\mathrm{m}$ & $100\ \mu\mathrm{m}$ (B), $10\ \mu\mathrm{m}$ (C) & $1\ \mu\mathrm{m}$ to $1\ \mathrm{mm}$ \\
-$\Pi = p_1/p_0$ & pressure ratio, Case B & -- & $5$ & $1.5$ to $20$ \\
-$\varepsilon$ & forcing amplitude, Case C & -- & $0.01$ & $0.01$ to $0.8$ \\
-$\omega/\omega_0$ & forcing frequency, Case C & -- & -- & $0.2$ to $3$ \\
+$\Pi = p_1/p_0$ & pressure ratio, Case B & -- & $5$ & $2$ to $20$ \\
+$\varepsilon$ & forcing amplitude, Case C & -- & $0.01$ & $10^{-4}$ to $0.3$ \\
+$\omega/\omega_0$ & forcing frequency, Case C & -- & -- & $0.5$ to $2$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -210,7 +209,7 @@ for $\kappa = 1.4$ ($288\ \mathrm{kHz}$ for $\kappa = 1$), and the quality facto
 $\omega_0/(2\beta) \approx 54$. The steady linear amplitude,
 $|x| = (\varepsilon p_0/\rho R_0^2)\big/\sqrt{(\omega_0^2 - \omega^2)^2 + 4\beta^2\omega^2}$,
 is an exact reference at small $\varepsilon$. Increasing $\varepsilon$ takes us into the
-nonlinear regime where the peak shifts and the response can become violent, which is Q2.
+nonlinear regime, where the response is no longer symmetric and the peak can shift, which is Q2.
 
 \subsection{Dimensionless form}\label{sec:nondim}
 
@@ -261,7 +260,7 @@ implicitly through Eq.~\eqref{eq:rayleigh-t}. The linearization in Eq.~\eqref{eq
 holds only for tiny oscillations, which is exactly the regime our questions are not about:
 Q1 asks for $R_{\min}$ and peak pressures in collapses where $R$ changes by a large factor,
 and Q2 asks where the linear prediction stops working. So we need to integrate the IVP
-numerically, across hundreds of parameter combinations.
+numerically, across many parameter combinations.
 
 The problem is also hard for a time integrator in a specific way. Near the end of a
 collapse, Eq.~\eqref{eq:rayleigh-energy} gives $|\dot R| \propto R^{-3/2}$, so

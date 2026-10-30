@@ -29,7 +29,7 @@ def steady_response(eps, ratio):
     T = 2.0 * math.pi / prm.extra["Omega"]
     # h_max keeps at least 50 samples per period so the max/min are resolved.
     sol = dp5(lambda t, y: rhs(t, y, prm), (0.0, N_PERIODS * T), [1.0, 0.0],
-              rtol=1e-9, atol=1e-11, positive=0, h_max=T / 50)
+              rtol=1e-8, atol=1e-10, positive=0, h_max=T / 50)
     x = sol.y[sol.t >= (N_PERIODS - N_MEASURE) * T, 0]
     return 0.5 * (x.max() - x.min()), x.max(), x.min()
 

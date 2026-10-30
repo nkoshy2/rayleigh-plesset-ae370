@@ -33,12 +33,12 @@ error in $\tilde R(\tilde t^*)$. Both fixed-step methods converge to the exact
 value, with observed orders $3.99$ (RK4) and $4.97$ (DP5) from the two finest
 steps. Deeper into the collapse the derivatives of $\mathbf{f}$ grow and the
 asymptotic range starts at smaller $h$, as Section~\ref{sec:method-error}
-anticipates: at $\tilde R=0.2$ the same runs give orders $3.93$ and $4.3$.
+anticipates: at $\tilde R=0.2$ the same step sizes give orders $3.90$ and $4.48$.
 Adaptive DP5 has no such difficulty. Run with $\mathrm{rtol}=10^{-12}$ until
 $\tilde R=10^{-3}$, where $|\tilde R'|\approx2.6\times10^{4}$, it reaches that
 radius at a time that differs from the exact one by $7\times10^{-14}$, and the
-state there satisfies the first integral Eq.~\eqref{eq:rayleigh-energy} to
-$10^{-8}$.
+state there satisfies the first integral Eq.~\eqref{eq:rayleigh-energy} to a
+relative error of $1.2\times10^{-11}$.
 
 \begin{figure}[tbp]
   \centering
@@ -62,10 +62,10 @@ halving, and adaptive DP5 reaches $3\times10^{-12}$ at $\mathrm{rtol}=10^{-12}$
 \paragraph{Case C: linear response.} At $\varepsilon=10^{-4}$ the forced response
 is linear to $O(\varepsilon)$, so the steady amplitude from the full nonlinear
 equation must match the damped, driven oscillator of Eq.~\eqref{eq:linear}. For
-$R_0=10\ \mu$m we integrate for 700 time units (about 13 damping times) and
+$R_0=10\ \mu$m we integrate for 700 time units (about 14 damping times) and
 measure the amplitude over the next 40 periods. Across
 $0.5\le\omega/\omega_0\le2$, including the resonance peak where the amplitude
-is twelve times the static response, the numerical and linear amplitudes agree
+is about $Q\approx54$ times the static response, the numerical and linear amplitudes agree
 to better than $1.4\times10^{-4}$ (Fig.~\ref{fig:caseC}), and to better than
 $5\times10^{-5}$ at all but the highest frequency. The run also reproduces the
 values from the premise: $\omega_0 t_R=2.161$, $f_0=342.5$\,kHz and $Q=53.6$.
@@ -133,7 +133,7 @@ Q1 needs $R_{\min}$, the peak inward wall speed and the peak gas pressure. The
 last is the most sensitive, because $p_{g,\max}\propto R_{\min}^{-3\kappa}$
 amplifies relative errors by about $4.2$. Figure~\ref{fig:tolerance} measures
 all three against a reference at $\mathrm{rtol}=10^{-13}$ for the pressure
-ratios we will sweep. To keep every quantity within $10^{-6}$ of the reference,
+ratios we sweep. To keep every quantity within $10^{-6}$ of the reference,
 far below what a plot can show, $\mathrm{rtol}=10^{-7}$ is enough for all
 $\Pi$. We use $\mathrm{rtol}=10^{-8}$ and $\mathrm{atol}=10^{-10}$ for a
 margin of ten: the worst error is then $1.3\times10^{-7}$ (peak gas pressure at
@@ -156,16 +156,18 @@ Adaptivity pays off most in the strongest collapses. For $\Pi=20$
 $6.8\times10^{-2}$ to $4.1\times10^{-4}$ (in units of $t_R$), shrinking sharply
 in the brief interval around each minimum. DP5 reaches an error of
 $9\times10^{-9}$ at $\tilde t=3$ with 1{,}508 evaluations (221 accepted and 30
-rejected steps). Fixed-step RK4 needs about 5{,}500 steps, or 21{,}900
-evaluations, for the same error, so the adaptive method is about 15 times
-cheaper here, and the gap widens as $\Pi$ grows. Hence we use fixed-step RK4
+rejected steps). Fixed-step RK4 needs about 4{,}750 steps, or 19{,}000
+evaluations, to reach the same error reliably, so the adaptive method is about
+13 times cheaper here. The same comparison gives factors of about 7 at
+$\Pi=5$ and 8 at $\Pi=10$, so the advantage grows with the strength of the
+collapse. Hence we use fixed-step RK4
 only for the convergence studies above, and adaptive DP5 for every result in
 Section~\ref{sec:results}.
 
 One finding matters for the results: at $\Pi=20$ the peak wall Mach number is
 $|\dot R|_{\max}/c=0.14$, above the cutoff of $0.1$ set in
-Section~\ref{sec:ivp}. The upper end of our planned $\Pi$ range is therefore
-outside the model's validity, and we will mark it as such in
+Section~\ref{sec:ivp}. The upper end of our $\Pi$ range is therefore
+outside the model's validity, and we mark it as such in
 Section~\ref{sec:results}.
 
 \begin{figure}[tbp]

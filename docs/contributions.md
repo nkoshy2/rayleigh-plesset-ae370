@@ -13,8 +13,8 @@ Rubric items: (1) Premise, (2) Method, (3) Correct implementation, (4) Results.
 | Name | Owns (rubric items 1 to 4) | Other duties | Est. % |
 |---|---|---|---|
 | Naveen Koshy | 1 (Premise), 3 (Implementation) | GitHub repository, report build | 34 |
-| Ava Hoppe | TODO | TODO | 33 |
-| Alison Nazaruk | TODO | TODO | 33 |
+| Ava Hoppe | 2 (Method) | | 33 |
+| Alison Nazaruk | 4 (Results) | | 33 |
 | **Total** | | | **100** |
 
 Checklist before submitting:

@@ -40,12 +40,23 @@ def main():
         p = np.log(r[-2, 2] / r[-1, 2]) / np.log(r[-2, 0] / r[-1, 0])
         print(f"{k:13s} observed order (finest pair) = {p:.2f}")
 
+    # The same fixed-step runs deeper into the collapse, at R = 0.2 R0.
+    t_deep = rayleigh_time(0.2)
+    for k, method, ns in [("RK4", rk4, [512, 1024]), ("DP5 fixed", dp5_fixed, [256, 512])]:
+        e = [abs(method(f, (0, t_deep), [1, 0], n, store=False).y[-1, 0] - 0.2)
+             for n in ns]
+        print(f"{k:13s} observed order at R = 0.2 R0 = {np.log2(e[0] / e[1]):.2f}")
+
     ev = Event(lambda t, y: y[0] - 1e-3, direction=-1, terminal=True)
     s = dp5(f, (0, 2), [1, 0], rtol=1e-12, atol=1e-14, events=[ev], positive=0)
     t_ex = rayleigh_time(1e-3)
     print(f"t(x=1e-3): numerical {s.t[-1]:.12f}, exact {t_ex:.12f}, "
           f"diff {abs(s.t[-1] - t_ex):.1e}, t_c = {RAYLEIGH_CONSTANT:.6f}, "
           f"nfev = {s.nfev}")
+    # First integral, Eq. 4 in dimensionless form: x'^2 = (2/3)(x^-3 - 1).
+    x, v = s.y[-1]
+    print(f"at x=1e-3: x' = {v:.4g}, first-integral relative residual "
+          f"{abs(v * v / (2 / 3 * (x**-3 - 1)) - 1):.1e}")
 
     fig, axes = plt.subplots(1, 2, figsize=(7.0, 2.8))
     ax = axes[0]

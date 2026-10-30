@@ -59,22 +59,25 @@ def main():
         print(f"{name}: real-axis limit {limits[name][0]:.3f}, "
               f"imaginary-axis limit {limits[name][1]:.3f}")
 
-    # How many fixed RK4 steps match the adaptive accuracy for Pi = 20 to t = 3?
-    f = lambda t, y: rhs(t, y, prm_b)
-    ref = dp5(f, (0, 3.0), [1, 0], rtol=1e-13, atol=1e-15, positive=0)
-    err_dp = abs(sol_b.y[-1, 0] - ref.y[-1, 0])
-    n = 100
-    while True:
+    # How many fixed RK4 steps match the adaptive accuracy to t = 3? Coarse RK4
+    # errors are irregular and can dip below the target by cancellation, so we
+    # take the smallest n beyond which every finer run on the grid meets it.
+    ns = np.unique(np.geomspace(500, 20000, 60).astype(int))
+    for Pi in [5.0, 10.0, 20.0]:
+        prm = case_B(R0=100e-6, Pi=Pi)
+        f = lambda t, y: rhs(t, y, prm)
+        ref = dp5(f, (0, 3.0), [1, 0], rtol=1e-13, atol=1e-15, positive=0)
+        sol = dp5(f, (0, 3.0), [1, 0], rtol=RTOL, atol=RTOL * 1e-2, positive=0)
+        err_dp = abs(sol.y[-1, 0] - ref.y[-1, 0])
         # coarse RK4 runs overshoot to R < 0 and return NaN; they just fail the test
         with np.errstate(invalid="ignore", divide="ignore", over="ignore"):
-            s = rk4(f, (0, 3.0), [1, 0], n, store=False)
-        if abs(s.y[-1, 0] - ref.y[-1, 0]) <= err_dp:
-            break
-        n = int(n * 1.25)
-    print(f"Pi=20, rtol={RTOL:g}: DP5 error {err_dp:.1e} with {sol_b.nfev} f-evals "
-          f"({sol_b.n_accept} accepted, {sol_b.n_reject} rejected); RK4 needs "
-          f"~{n} steps = {4 * n} f-evals for the same error")
-    print(f"step size range: {h_b.min():.2e} to {h_b.max():.2e} "
+            ok = np.array([abs(rk4(f, (0, 3.0), [1, 0], n, store=False).y[-1, 0]
+                               - ref.y[-1, 0]) <= err_dp for n in ns])
+        n = ns[next(i for i in range(len(ns)) if ok[i:].all())]
+        print(f"Pi={Pi:g}, rtol={RTOL:g}: DP5 error {err_dp:.1e} with {sol.nfev} "
+              f"f-evals ({sol.n_accept} accepted, {sol.n_reject} rejected); RK4 "
+              f"needs ~{n} steps = {4 * n} f-evals, {4 * n / sol.nfev:.1f}x more")
+    print(f"Pi=20 step size range: {h_b.min():.2e} to {h_b.max():.2e} "
           f"(ratio {h_b.max() / h_b.min():.0f})")
 
     # ---------------------------------------------------------- stability --

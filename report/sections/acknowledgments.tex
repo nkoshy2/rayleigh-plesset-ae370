@@ -1,8 +1,39 @@
 \section*{Acknowledgments}\label{sec:acknowledgments}
 % Required by the assignment: an overview of how generative AI was used, from ideation
 % through method choice, coding, testing, figures and results.
-% Summarize docs/ai-usage-log.md here at the end of the project.
+% Summarized from docs/ai-usage-log.md.
 
-\todo{Summarize generative AI use from docs/ai-usage-log.md. So far: Claude (Claude Code)
-was used to set up the repository skeleton and to draft the premise section, which the team
-then checked and edited.}
+We used generative AI, mainly Claude (Anthropic, through Claude Code), at every stage of the
+project. We treated its output as a draft: a team member read, checked or rewrote everything
+that went into the report or the code, and we are responsible for the final content.
+
+\paragraph{Ideation and premise.} We chose the topic (cavitation in rocket turbopump
+inducers) ourselves. Claude then set up the repository skeleton and drafted the premise:
+motivation, research questions, the initial value problem, the parameter table, the three
+test cases and the nondimensionalization. We re-derived the dimensionless form, the
+linearization and the Rayleigh collapse constant by hand, checked the water properties
+against the NIST WebBook and each reference against its source, and edited the text. The
+$0.1$ wall-Mach-number cutoff is stated as our own choice because no source gives a single
+accepted value.
+
+\paragraph{Method selection and justification.} We used Claude to discuss the trade-off
+between fixed-step RK4 and an adaptive embedded pair for a problem whose time scale
+collapses, and to review our method section against the rubric. It caught several errors
+(cross-references, the wording of the order conditions, the damping order of RK4, the
+imaginary-axis stability limit of the Dormand--Prince pair, event location) and missing
+citations, which we corrected.
+
+\paragraph{Implementation and testing.} Claude wrote the first version of the model, the
+RK4 and adaptive Dormand--Prince integrators (no library time integrator is called), the
+unit tests and the five verification experiments, and drafted the implementation section.
+We read the code, reran the tests and every experiment, and checked that each number quoted
+in Section~\ref{sec:implementation} matches the printed output.
+
+\paragraph{Figures and results.} We ran the parameter sweeps for Q1--Q3 and wrote the
+results section. Before submission, Claude checked the full report against the project
+rubric, added scripts to the repository that regenerate the three results figures, and
+confirmed that they reproduce every number in Section~\ref{sec:results}.
+
+\paragraph{Writing and tooling.} Claude also helped install and debug the \LaTeX{} build,
+create the GitHub repository, and draft this acknowledgment from our AI usage log
+(\texttt{docs/ai-usage-log.md} in the repository).

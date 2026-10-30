@@ -51,7 +51,7 @@ pip install -e .
 
 ```
 pytest                              # 24 tests, a few seconds
-python experiments/run_all.py       # regenerate every figure in figures/ (about 2 minutes)
+python experiments/run_all.py       # regenerate every figure in figures/ (a few minutes)
 ```
 
 A minimal example:

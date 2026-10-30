@@ -12,10 +12,9 @@ Rubric items: (1) Premise, (2) Method, (3) Correct implementation, (4) Results.
 
 | Name | Owns (rubric items 1 to 4) | Other duties | Est. % |
 |---|---|---|---|
-| TODO Member 1 | TODO e.g. 1 (lead), 4 | TODO e.g. report assembly | TODO |
-| TODO Member 2 | TODO e.g. 2 (lead) | TODO | TODO |
-| TODO Member 3 | TODO e.g. 3 (lead) | TODO e.g. repo, tests | TODO |
-| TODO Member 4 | TODO e.g. 4 (lead) | TODO e.g. figures | TODO |
+| Naveen Koshy | 1 (Premise), 3 (Implementation) | GitHub repository, report build | 34 |
+| Ava Hoppe | TODO | TODO | 33 |
+| Alison Nazaruk | TODO | TODO | 33 |
 | **Total** | | | **100** |
 
 Checklist before submitting:
